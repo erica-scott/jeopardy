@@ -1,14 +1,18 @@
 <?php
 $con = mysql_connect('localhost', 'escott', 'Silas2727_') or die('Could not connect: ' . mysql_error());
-mysql_select_db('jeopardy');
+mysql_select_db('jeopardy', $con);
+date_default_timezone_set('Canada/Pacific');
 
 function startGame($players) {
   global $con;
   
   foreach ($players as $id => $player) {
     $query = sprintf("INSERT INTO current_game (player_id, player_name, score) VALUES ('%s', '%s', '%s')", $id, $player, 0);
-    $res = mysql_query($query);
+    $res = mysql_query($query, $con);
   }
+
+  $query = sprintf("INSERT INTO game_stats (start_time, number_players) VALUES (NOW(), '%s')", count($players));
+  $res = mysql_query($query);
 }
 
 function addToScore($player_id, $amount) {
@@ -27,6 +31,19 @@ function removeFromScore($player_id, $amount) {
 
 function endGame() {
   global $con;
+
+  $query = "SELECT * FROM game_stats";
+  $res = mysql_query($query);
+  $row = mysql_fetch_assoc($res);
+  $start_time = $row['start_time'];
+  $num_players = $row['number_players'];
+
+  $game_length = strtotime(date('Y-m-d H:i:s')) - strtotime($start_time);
+  $hours = floor($game_length/3600);
+  $mins = floor(($game_length - ($hours*3600)) / 60);
+  $secs = floor($game_length % 60);
+
+  $game_length = $hours . "hrs : " . $mins . "mins : " . $secs . 'secs';
   
   $query = "SELECT * FROM current_game";
   $res = mysql_query($query);
@@ -42,13 +59,16 @@ function endGame() {
     }
   }
   if ($count == 0) {
-    $query = sprintf("INSERT INTO statistics (winner_name, score, date) VALUES ('%s', '%s', NOW())", $winner['player_name'], $winner['score']);
+    $query = sprintf("INSERT INTO statistics (winner_name, score, date, game_length, num_players) VALUES ('%s', '%s', NOW(), '%s', '%s')", $winner['player_name'], $winner['score'], $game_length, $num_players);
   } else {
-    $query = sprintf("INSERT INTO statistics (winner_name, score, date) VALUES ('TIE', '%s', NOW())", $winner_score);
+    $query = sprintf("INSERT INTO statistics (winner_name, score, date, game_length, num_players) VALUES ('TIE', '%s', NOW(), '%s', '%s')", $winner_score, $game_length, $num_players);
   }
   $res = mysql_query($query);
   
   $query = "DELETE FROM current_game";
+  $res = mysql_query($query);
+
+  $query = "DELETE FROM game_stats";
   $res = mysql_query($query);
 }
 ?>

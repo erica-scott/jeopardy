@@ -15,6 +15,9 @@
       font-weight: bold;
       text-align: center;
     }
+    .data td {
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -25,20 +28,25 @@ $con = mysql_connect('localhost', 'escott', 'Silas2727_') or die('Could not conn
 mysql_select_db('jeopardy');
 $query = "SELECT * FROM statistics ORDER BY score";
 $stat_res = mysql_query($query);
-?>
-<table border=1 width=60% style="border-collapse:collapse;">
-  <tr class="header">
-    <td>Name</td>
-    <td>Score</td>
-    <td>Date</td>
-  </tr>
-  <?php while ($row = mysql_fetch_assoc($stat_res)) { ?>
-    <tr>
-      <td><?php print $row['winner_name']; ?></td>
-      <td><?php print $row['score']; ?></td>
-      <td><?php print $row['date']; ?></td>
+if ($stat_res != FALSE) { ?>
+  <table border=1 width=60% style="border-collapse:collapse;">
+    <tr class="header">
+      <td width="30%">Name</td>
+      <td width="15%">Score</td>
+      <td width="25%">Date</td>
+      <td width="25%">Game Length</td>
+      <td width="5%">Num Players</td>
     </tr>
-  <?php } ?>
-</table>
+    <?php while ($row = mysql_fetch_assoc($stat_res)) { ?>
+      <tr class="data">
+        <td><?php print $row['winner_name']; ?></td>
+        <td><?php print $row['score']; ?></td>
+        <td><?php print $row['date']; ?></td>
+        <td><?php print $row['game_length']; ?></td>
+        <td><?php print $row['num_players']; ?></td>
+      </tr>
+    <?php } ?>
+  </table>
+<?php } ?>
 </body>
 </html>

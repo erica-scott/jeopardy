@@ -29,7 +29,7 @@
           url: 'ajax/start_game.php',
           method: 'post',
           data: {players},
-          success: function(data) {
+          success: function() {
             window.location.reload();
           }
         });
@@ -94,7 +94,7 @@
         $.ajax({
           url: 'ajax/end_game.php',
           method: 'post',
-          success: function(data) {
+          success: function() {
             window.location.replace('index.php');
           }
         });
@@ -126,7 +126,7 @@
   
   $query = "SELECT * FROM current_game";
   $res = mysql_query($query);
-  if (mysql_num_rows($res) > 0) { ?>
+  if ($res != FALSE && mysql_num_rows($res) > 0) { ?>
     <input type="button" id="final_jeopardy" value="Submit Final Jeopardy Scores">
     <input type="button" id="end_game" value="End Game"><br><br>
     <?php
@@ -194,6 +194,22 @@
         <?php } ?>
       </tr>
     </table>
+    <?php
+    $query = "SELECT * FROM game_stats";
+    $res = mysql_query($query);
+    $row = mysql_fetch_assoc($res);
+
+    date_default_timezone_set('Canada/Pacific');
+
+    $game_length = strtotime(date('Y-m-d H:i:s')) - strtotime($row['start_time']);
+    $hours = floor($game_length/3600);
+    $mins = floor(($game_length - ($hours*3600)) / 60);
+    $secs = floor($game_length % 60);
+
+    $game_length = $hours . "hrs : " . $mins . "mins : " . $secs . 'secs';
+
+    print "<b><br>Game Stats: " . $row['number_players'] . ' players have been playing for ' . $game_length . '</b>';
+    ?>
   <?php } else { ?>
     <input type="button" id="return" value="Return to Statistics"><br><br>
     <b>Input the names of the players below:</b><br>
