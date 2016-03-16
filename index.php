@@ -8,7 +8,70 @@
       $('#new_game').click(function() {
         window.location.replace('game.php');
       });
+
+      $('#dialog-login').dialog({
+        autoOpen: false,
+        buttons: {
+          Login: function() {
+            var username = $('#username').val();
+            var password = $('#password').val();
+            $.ajax({
+              url: 'ajax/check_login.php',
+              method: 'post',
+              data: {username, password},
+              success: function(data) {
+                if (data == 1) {
+                  createCookie('username', username, 60);
+                  $('#dialog-login').dialog("close");
+                  window.location.reload();
+                } else {
+                  $('#dialog-login').append('<br>Your username or password was incorrect.');
+                }
+              }
+            });
+          },
+          Cancel: function() {
+            $(this).dialog("close");
+          }
+        }
+      });
+
+      $('#login').click(function() {
+        $.ajax({
+          url: 'ajax/login_form.php',
+          success: function(data) {
+            $('#dialog-login').html(data);
+            $('#dialog-login').dialog('open');
+          }
+        });
+      });
+
+      $('#logout').click(function() {
+        createCookie('username', 'false', 1);
+        window.location.reload();
+      });
+
+      $('#clear_statistics').click(function() {
+        $.ajax({
+          url: 'ajax/clear_statistics.php',
+          success: function() {
+            window.location.reload();
+          }
+        });
+      });
+
     });
+
+    function createCookie(name, value, minutes) {
+      if (minutes) {
+        var date = new Date();
+        date.setTime(date.getTime()+(minutes*60*1000));
+        var expires = "; expires=" + date.toGMTString();
+      } else {
+        var expires = "";
+      }
+      document.cookie = name + "=" + value + expires + "; path=/";
+    }
   </script>
   <style>
     .header td {
@@ -22,7 +85,14 @@
 </head>
 <body>
 <h1>Welcome to Erica & Sam's Jeopardy Game!</h1>
-<input type="button" id="new_game" value="Start New Game"><br><br>
+<input type="button" id="new_game" value="Start New Game">
+<?php if(isset($_COOKIE['username']) && $_COOKIE['username'] != 'false') : ?>
+  <input type="button" id="clear_statistics" value="Clear Statistics">
+  <input type="button" id="logout" value="Logout">
+<?php else: ?>
+  <input type="button" id="login" value="Login">
+<?php endif; ?>
+<br><br>
 <?php
 $con = mysql_connect('localhost', 'escott', 'Silas2727_') or die('Could not connect: ' . mysql_error());
 mysql_select_db('jeopardy');
@@ -48,5 +118,6 @@ if ($stat_res != FALSE) { ?>
     <?php } ?>
   </table>
 <?php } ?>
+<div id="dialog-login" title="Login"></div>
 </body>
 </html>

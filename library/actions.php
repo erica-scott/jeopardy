@@ -48,21 +48,18 @@ function endGame() {
   $query = "SELECT * FROM current_game";
   $res = mysql_query($query);
   $winner_score = 0;
-  $count = 0;
   while ($row = mysql_fetch_assoc($res)) {
     if ($row['score'] == $winner_score) {
-      $count++;
+      if ($winner_name != '') {
+        $winner_name = 'TIE - ' . $winner_name . ' & ' . $row['player_name'];
+      }
     } else if ($row['score'] > $winner_score) {
-      $winner = $row;
+      $winner_name = $row['player_name'];
       $winner_score = $row['score'];
-      $count = 0;
     }
   }
-  if ($count == 0) {
-    $query = sprintf("INSERT INTO statistics (winner_name, score, date, game_length, num_players) VALUES ('%s', '%s', NOW(), '%s', '%s')", $winner['player_name'], $winner['score'], $game_length, $num_players);
-  } else {
-    $query = sprintf("INSERT INTO statistics (winner_name, score, date, game_length, num_players) VALUES ('TIE', '%s', NOW(), '%s', '%s')", $winner_score, $game_length, $num_players);
-  }
+  
+  $query = sprintf("INSERT INTO statistics (winner_name, score, date, game_length, num_players) VALUES ('%s', '%s', NOW(), '%s', '%s')", $winner_name, $winner_score, $game_length, $num_players);
   $res = mysql_query($query);
   
   $query = "DELETE FROM current_game";
@@ -71,4 +68,28 @@ function endGame() {
   $query = "DELETE FROM game_stats";
   $res = mysql_query($query);
 }
+
+function login($username, $password) {
+  global $con;
+
+  $query = sprintf("SELECT * FROM admins WHERE username = '%s'", $username);
+  $res = mysql_query($query);
+  if ($row = mysql_fetch_assoc($res)) {
+    if ($row['password'] == $password) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {  
+    return false;
+  }
+}
+
+function clearStatistics() {
+  global $con;
+
+  $query = "DELETE FROM statistics";
+  $res = mysql_query($query);
+}
+
 ?>
