@@ -85,39 +85,45 @@
 </head>
 <body>
 <h1>Welcome to Erica & Sam's Jeopardy Game!</h1>
-<input type="button" id="new_game" value="Start New Game">
-<?php if(isset($_COOKIE['username']) && $_COOKIE['username'] != 'false') : ?>
-  <input type="button" id="clear_statistics" value="Clear Statistics">
-  <input type="button" id="logout" value="Logout">
-<?php else: ?>
-  <input type="button" id="login" value="Login">
-<?php endif; ?>
-<br><br>
 <?php
-$con = mysql_connect('localhost', 'escott', 'Silas2727_') or die('Could not connect: ' . mysql_error());
-mysql_select_db('jeopardy');
-$query = "SELECT * FROM statistics ORDER BY score";
-$stat_res = mysql_query($query);
-if ($stat_res != FALSE) { ?>
-  <table border=1 width=60% style="border-collapse:collapse;">
-    <tr class="header">
-      <td width="30%">Name</td>
-      <td width="15%">Score</td>
-      <td width="25%">Date</td>
-      <td width="25%">Game Length</td>
-      <td width="5%">Num Players</td>
-    </tr>
-    <?php while ($row = mysql_fetch_assoc($stat_res)) { ?>
-      <tr class="data">
-        <td><?php print $row['winner_name']; ?></td>
-        <td><?php print $row['score']; ?></td>
-        <td><?php print $row['date']; ?></td>
-        <td><?php print $row['game_length']; ?></td>
-        <td><?php print $row['num_players']; ?></td>
+$user_agent = $_SERVER['HTTP_USER_AGENT'];
+if (preg_match('/iPhone|BlackBerry/', $user_agent)) {
+  header('Location: http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] . 'game.php');
+} else { ?>
+  <input type="button" id="new_game" value="Start New Game">
+  <?php if(isset($_COOKIE['username']) && $_COOKIE['username'] != 'false') : ?>
+    <input type="button" id="clear_statistics" value="Clear Statistics">
+    <input type="button" id="logout" value="Logout">
+  <?php else: ?>
+    <input type="button" id="login" value="Login">
+  <?php endif; ?>
+  <br><br>
+  <?php
+  $con = mysql_connect('localhost', 'escott', 'Silas2727_') or die('Could not connect: ' . mysql_error());
+  mysql_select_db('jeopardy');
+  $query = "SELECT * FROM statistics ORDER BY score";
+  $stat_res = mysql_query($query);
+  if ($stat_res != FALSE) { ?>
+    <table border=1 width=60% style="border-collapse:collapse;">
+      <tr class="header">
+        <td width="30%">Name</td>
+        <td width="15%">Score</td>
+        <td width="25%">Date</td>
+        <td width="25%">Game Length</td>
+        <td width="5%">Num Players</td>
       </tr>
-    <?php } ?>
-  </table>
+      <?php while ($row = mysql_fetch_assoc($stat_res)) { ?>
+        <tr class="data">
+          <td><?php print $row['winner_name']; ?></td>
+          <td><?php print $row['score']; ?></td>
+          <td><?php print $row['date']; ?></td>
+          <td><?php print $row['game_length']; ?></td>
+          <td><?php print $row['num_players']; ?></td>
+        </tr>
+      <?php } ?>
+    </table>
+  <?php } ?>
+  <div id="dialog-login" title="Login"></div>
 <?php } ?>
-<div id="dialog-login" title="Login"></div>
 </body>
 </html>

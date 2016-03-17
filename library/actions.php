@@ -3,7 +3,7 @@ $con = mysql_connect('localhost', 'escott', 'Silas2727_') or die('Could not conn
 mysql_select_db('jeopardy', $con);
 date_default_timezone_set('Canada/Pacific');
 
-function startGame($players) {
+function startGame($players, $mobile_game) {
   global $con;
   
   foreach ($players as $id => $player) {
@@ -11,7 +11,7 @@ function startGame($players) {
     $res = mysql_query($query, $con);
   }
 
-  $query = sprintf("INSERT INTO game_stats (start_time, number_players) VALUES (NOW(), '%s')", count($players));
+  $query = sprintf("INSERT INTO game_stats (start_time, number_players, mobile_game) VALUES (NOW(), '%s', '%s')", count($players), $mobile_game);
   $res = mysql_query($query);
 }
 
@@ -20,6 +20,9 @@ function addToScore($player_id, $amount) {
   
   $query = sprintf("UPDATE current_game SET score = score + %s WHERE player_id = '%s'", intval($amount), $player_id);
   mysql_query($query);
+
+  $query = "UPDATE game_stats SET rung_in = '0'";
+  $res = mysql_query($query);
 }
 
 function removeFromScore($player_id, $amount) {
@@ -27,6 +30,9 @@ function removeFromScore($player_id, $amount) {
   
   $query = sprintf("UPDATE current_game SET score = score - %s WHERE player_id = '%s'", intval($amount), $player_id);
   mysql_query($query);
+
+  $query = "UPDATE game_stats SET rung_in = '0'";
+  $res = mysql_query($query);
 }
 
 function endGame() {
@@ -51,7 +57,9 @@ function endGame() {
   while ($row = mysql_fetch_assoc($res)) {
     if ($row['score'] == $winner_score) {
       if ($winner_name != '') {
-        $winner_name = 'TIE - ' . $winner_name . ' & ' . $row['player_name'];
+        $winner_name = $winner_name . ' & ' . $row['player_name'];
+      } else {
+        $winner_name = $row['player_name'];
       }
     } else if ($row['score'] > $winner_score) {
       $winner_name = $row['player_name'];
@@ -89,6 +97,20 @@ function clearStatistics() {
   global $con;
 
   $query = "DELETE FROM statistics";
+  $res = mysql_query($query);
+}
+
+function checkIn($user_id) {
+  global $con;
+
+  $query = sprintf("UPDATE current_game SET checked_in = 1 WHERE player_id = '%s'", $user_id);
+  $res = mysql_query($query);
+}
+
+function ringIn() {
+  global $con;
+
+  $query = "UPDATE game_stats SET rung_in = '1'";
   $res = mysql_query($query);
 }
 

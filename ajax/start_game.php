@@ -1,5 +1,6 @@
 <?php
 include('../library/actions.php');
 $players = $_POST['players'];
-startGame($players);
+$mobile_game = $_POST['mobile_game'];
+startGame($players, $mobile_game);
 ?>

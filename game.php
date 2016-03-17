@@ -5,6 +5,11 @@
   <script src="http://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
   <script>
     $(document).ready(function() {
+      if ($('#rung_in').val() == 1) {
+        $('.ring_in').attr("disabled", true);
+        $('.ring_in').css('background-color', 'red');
+      }
+
       $('#return').click(function() {
         window.location.replace('index.php');
       });
@@ -20,6 +25,10 @@
         var id;
         var name;
         var players = new Array();
+        var mobile_game = 0;
+        if ($('#mobile_game').is(":checked")) {
+          mobile_game = 1;
+        }
         $('.players').each(function() {
           id = $(this).attr('id').split('_')[1];
           name = $(this).val();
@@ -28,7 +37,7 @@
         $.ajax({
           url: 'ajax/start_game.php',
           method: 'post',
-          data: {players},
+          data: {players, mobile_game},
           success: function() {
             window.location.reload();
           }
@@ -95,11 +104,48 @@
           url: 'ajax/end_game.php',
           method: 'post',
           success: function() {
+            createCookie('user_id', 'false', 1);
             window.location.replace('index.php');
           }
         });
       });
+
+      $('#player_check_in').click(function() {
+        var user_id = $("input:radio[name=player_id_check]").val();
+        $.ajax({
+          url: 'ajax/check_in.php',
+          method: 'post',
+          data: {user_id},
+          success: function() {
+            createCookie('user_id', user_id, 3600);
+            window.location.reload();
+          }
+        });
+      });
+
+      $('.ring_in').click(function() {
+        $('#rung_in').val(1);
+        $(this).attr("disabled", true);
+        $(this).css('background-color', 'red');
+        $.ajax({
+          url: 'ajax/ring_in.php',
+          success: function() {
+            window.location.reload();
+          }
+        });
+      });
     });
+
+    function createCookie(name, value, minutes) {
+      if (minutes) {
+        var date = new Date();
+        date.setTime(date.getTime()+(minutes*60*1000));
+        var expires = "; expires=" + date.toGMTString();
+      } else {
+        var expires = "";
+      }
+      document.cookie = name + "=" + value + expires + "; path=/";
+    }
   </script>
   <style>
     .header td {
@@ -116,9 +162,17 @@
     .bet {
       width: 100px;
     }
+    .ring_in {
+      width: 500px; 
+      height: 500px; 
+      margin: auto; 
+      display: block;
+      background-color: green;
+    }
   </style>
 </head>
 <body>
+  <?php date_default_timezone_set('Canada/Pacific');?>
   <h1>Welcome to Erica & Sam's Jeopardy Game!</h1>
   <?php
   $con = mysql_connect('localhost', 'escott', 'Silas2727_') or die('Could not connect: ' . mysql_error());
@@ -126,99 +180,157 @@
   
   $query = "SELECT * FROM current_game";
   $res = mysql_query($query);
-  if ($res != FALSE && mysql_num_rows($res) > 0) { ?>
-    <input type="button" id="final_jeopardy" value="Submit Final Jeopardy Scores">
-    <input type="button" id="end_game" value="End Game"><br><br>
-    <?php
-    $query = "SELECT * FROM current_game";
-    $res = mysql_query($query);
-    $num_rows = mysql_num_rows($res);
-    while ($row = mysql_fetch_assoc($res)) {
-      $data[] = $row;
+
+  $checked_in = 0;
+  while ($row = mysql_fetch_assoc($res)) {
+    $data[] = $row;
+    if ($row['checked_in'] == 1) {
+      $checked_in++;
     }
-    ?> <table width="100%">
-      <tr class="header">
-        <?php for($i = 0; $i < $num_rows; $i++) { ?>
-          <td <?php if ($data[$i]['score'] < 0) { ?> style="color: red;" <?php } ?>><?php print $data[$i]['player_name'] . ' : ' . $data[$i]['score']; ?></td>
-        <?php } ?>
-      </tr>
-      <tr>
-        <?php for($i = 0; $i < $num_rows; $i++) { ?>
-          <td>
-          <table>
-            <tr> 
-              <td><input type="button" class="plus" id="200_<?php print $data[$i]['player_id']; ?>" value="+200"></td>
-              <td><input type="button" class="minus" id="200_<?php print $data[$i]['player_id']; ?>" value="-200"></td>
-            </tr>
-            <tr> 
-              <td><input type="button" class="plus" id="400_<?php print $data[$i]['player_id']; ?>" value="+400"></td>
-              <td><input type="button" class="minus" id="400_<?php print $data[$i]['player_id']; ?>" value="-400"></td>
-            </tr>
-            <tr> 
-              <td><input type="button" class="plus" id="600_<?php print $data[$i]['player_id']; ?>" value="+600"></td>
-              <td><input type="button" class="minus" id="600_<?php print $data[$i]['player_id']; ?>" value="-600"></td>
-            </tr>
-            <tr> 
-              <td><input type="button" class="plus" id="800_<?php print $data[$i]['player_id']; ?>" value="+800"></td>
-              <td><input type="button" class="minus" id="800_<?php print $data[$i]['player_id']; ?>" value="-800"></td>
-            </tr>
-            <tr> 
-              <td><input type="button" class="plus" id="1000_<?php print $data[$i]['player_id']; ?>" value="+1000"></td>
-              <td><input type="button" class="minus" id="1000_<?php print $data[$i]['player_id']; ?>" value="-1000"></td>
-            </tr>
-            <tr> 
-              <td><input type="button" class="plus" id="1200_<?php print $data[$i]['player_id']; ?>" value="+1200"></td>
-              <td><input type="button" class="minus" id="1200_<?php print $data[$i]['player_id']; ?>" value="-1200"></td>
-            </tr>
-            <tr> 
-              <td><input type="button" class="plus" id="1600_<?php print $data[$i]['player_id']; ?>" value="+1600"></td>
-              <td><input type="button" class="minus" id="1600_<?php print $data[$i]['player_id']; ?>" value="-1600"></td>
-            </tr>
-            <tr> 
-              <td><input type="button" class="plus" id="2000_<?php print $data[$i]['player_id']; ?>" value="+2000"></td>
-              <td><input type="button" class="minus" id="2000_<?php print $data[$i]['player_id']; ?>" value="-2000"></td>
-            </tr>
-            <tr>
-              <td>Final Jeopardy:</td>
-              <td><input type="text" class="bet" id="bet_<?php print $data[$i]['player_id']; ?>"></td>
-            </tr>
-            <tr>
-              <td>Correct Answer?</td>
-              <td>
-                Yes<input class="correct_answer" type="radio" name="correct_<?php print $data[$i]['player_id']; ?>" value="yes">
-                No<input class="correct_answer" type="radio" name="correct_<?php print $data[$i]['player_id']; ?>" value="no">
-              </td>
-            </tr>
-          </table>
-          </td>
-        <?php } ?>
-      </tr>
-    </table>
-    <?php
+  }
+
+  $user_agent = $_SERVER['HTTP_USER_AGENT'];
+  if (preg_match('/iPhone|BlackBerry/', $user_agent)) {
     $query = "SELECT * FROM game_stats";
     $res = mysql_query($query);
-    $row = mysql_fetch_assoc($res);
+    $game_stat_row = mysql_fetch_assoc($res);
+    if (mysql_num_rows($res) > 0) { 
+      if ($game_stat_row['mobile_game'] == 1) {
+        if ($checked_in == count($data)) {
+          $user_id = $_COOKIE['user_id'];
+          $query = sprintf("SELECT * FROM current_game WHERE player_id = '%s'", $user_id);
+          $user_res = mysql_query($query);
+          $row = mysql_fetch_assoc($user_res);
+          print '<h2>' . $row['player_name'] . ', your current score is: ' . $row['score'] . ' (Please refresh the page to update this)</h2><br>';
+          ?> 
+          <input type="hidden" id="rung_in" value="<?php print $game_stat_row['rung_in']; ?>">
+          <input class="ring_in" type="button" id="ringin_<?php print $row['player_id']; ?>"><?php
+          $query = "SELECT * FROM game_stats";
+          $res = mysql_query($query);
+          $row = mysql_fetch_assoc($res);
 
-    date_default_timezone_set('Canada/Pacific');
+          $game_length = strtotime(date('Y-m-d H:i:s')) - strtotime($row['start_time']);
+          $hours = floor($game_length/3600);
+          $mins = floor(($game_length - ($hours*3600)) / 60);
+          $secs = floor($game_length % 60);
 
-    $game_length = strtotime(date('Y-m-d H:i:s')) - strtotime($row['start_time']);
-    $hours = floor($game_length/3600);
-    $mins = floor(($game_length - ($hours*3600)) / 60);
-    $secs = floor($game_length % 60);
+          $game_length = $hours . "hrs : " . $mins . "mins : " . $secs . 'secs';
 
-    $game_length = $hours . "hrs : " . $mins . "mins : " . $secs . 'secs';
+          print "<br><br><h2><b>Game Stats: " . $row['number_players'] . ' players have been playing for ' . $game_length . '</b></h2>';
+        } else {
+          if (isset($_COOKIE['user_id'])) {
+            print "Please wait for the rest of the players to check in!";
+          } else {
+            print "Please choose your name and check in to the game:<br><br>";
+            foreach ($data as $row) { ?>
+              <?php if ($row['checked_in'] == 0) { ?>
+                <input type="radio" name="player_id_check" value="<?php print $row['player_id']; ?>"><?php print $row['player_name']; ?><br><br><br>
+              <?php } ?>
+            <?php }
+            ?> <input type="button" id="player_check_in" value="Check In"> <?php
+          }
+        }
+      } else {
+        print "There is a non-mobile game going on right now. Please check back later!";
+      }  
+    } else {
+      print 'No games have been started yet! Please go online on a computer to start a game.';
+    }
+  } else {
+    if ($res != FALSE && mysql_num_rows($res) > 0) { 
+      $query = "SELECT * FROM game_stats";
+      $res = mysql_query($query);
+      $game_stat_row = mysql_fetch_assoc($res);
+      if ($checked_in == count($data) || $game_stat_row['mobile_game'] == 0) { ?>
+        <input type="button" id="final_jeopardy" value="Submit Final Jeopardy Scores">
+        <input type="button" id="end_game" value="End Game"><br><br>
+        <table width="100%">
+          <tr class="header">
+            <?php for($i = 0; $i < count($data); $i++) { ?>
+              <td <?php if ($data[$i]['score'] < 0) { ?> style="color: red;" <?php } ?>><?php print $data[$i]['player_name'] . ' : ' . $data[$i]['score']; ?></td>
+            <?php } ?>
+          </tr>
+          <tr>
+            <?php for($i = 0; $i < count($data); $i++) { ?>
+              <td>
+              <table>
+                <tr> 
+                  <td><input type="button" class="plus" id="200_<?php print $data[$i]['player_id']; ?>" value="+200"></td>
+                  <td><input type="button" class="minus" id="200_<?php print $data[$i]['player_id']; ?>" value="-200"></td>
+                </tr>
+                <tr> 
+                  <td><input type="button" class="plus" id="400_<?php print $data[$i]['player_id']; ?>" value="+400"></td>
+                  <td><input type="button" class="minus" id="400_<?php print $data[$i]['player_id']; ?>" value="-400"></td>
+                </tr>
+                <tr> 
+                  <td><input type="button" class="plus" id="600_<?php print $data[$i]['player_id']; ?>" value="+600"></td>
+                  <td><input type="button" class="minus" id="600_<?php print $data[$i]['player_id']; ?>" value="-600"></td>
+                </tr>
+                <tr> 
+                  <td><input type="button" class="plus" id="800_<?php print $data[$i]['player_id']; ?>" value="+800"></td>
+                  <td><input type="button" class="minus" id="800_<?php print $data[$i]['player_id']; ?>" value="-800"></td>
+                </tr>
+                <tr> 
+                  <td><input type="button" class="plus" id="1000_<?php print $data[$i]['player_id']; ?>" value="+1000"></td>
+                  <td><input type="button" class="minus" id="1000_<?php print $data[$i]['player_id']; ?>" value="-1000"></td>
+                </tr>
+                <tr> 
+                  <td><input type="button" class="plus" id="1200_<?php print $data[$i]['player_id']; ?>" value="+1200"></td>
+                  <td><input type="button" class="minus" id="1200_<?php print $data[$i]['player_id']; ?>" value="-1200"></td>
+                </tr>
+                <tr> 
+                  <td><input type="button" class="plus" id="1600_<?php print $data[$i]['player_id']; ?>" value="+1600"></td>
+                  <td><input type="button" class="minus" id="1600_<?php print $data[$i]['player_id']; ?>" value="-1600"></td>
+                </tr>
+                <tr> 
+                  <td><input type="button" class="plus" id="2000_<?php print $data[$i]['player_id']; ?>" value="+2000"></td>
+                  <td><input type="button" class="minus" id="2000_<?php print $data[$i]['player_id']; ?>" value="-2000"></td>
+                </tr>
+                <tr>
+                  <td>Final Jeopardy:</td>
+                  <td><input type="text" class="bet" id="bet_<?php print $data[$i]['player_id']; ?>"></td>
+                </tr>
+                <tr>
+                  <td>Correct Answer?</td>
+                  <td>
+                    Yes<input class="correct_answer" type="radio" name="correct_<?php print $data[$i]['player_id']; ?>" value="yes">
+                    No<input class="correct_answer" type="radio" name="correct_<?php print $data[$i]['player_id']; ?>" value="no">
+                  </td>
+                </tr>
+              </table>
+              </td>
+            <?php } ?>
+          </tr>
+        </table>
+        <?php
+        date_default_timezone_set('Canada/Pacific');
 
-    print "<b><br>Game Stats: " . $row['number_players'] . ' players have been playing for ' . $game_length . '</b>';
-    ?>
-  <?php } else { ?>
-    <input type="button" id="return" value="Return to Statistics"><br><br>
-    <b>Input the names of the players below:</b><br>
-    Player Name: <input class="players" type="text" id="player_0"><br>
-    Player Name: <input class="players" type="text" id="player_1"><br>
-    <div id="more_players"></div>
-    <img id="add_player" src="images/plus.png" width="25px" height="25px">
-    <input type="hidden" id="next_player" value=2>
-    <br><br><input type="button" id="start_game" value="Start Game">
+        $query = "SELECT * FROM game_stats";
+        $res = mysql_query($query);
+        $row = mysql_fetch_assoc($res);
+
+        $game_length = strtotime(date('Y-m-d H:i:s')) - strtotime($row['start_time']);
+        $hours = floor($game_length/3600);
+        $mins = floor(($game_length - ($hours*3600)) / 60);
+        $secs = floor($game_length % 60);
+
+        $game_length = $hours . "hrs : " . $mins . "mins : " . $secs . 'secs';
+        print "<b><br>Game Stats: " . $row['number_players'] . ' players have been playing for ' . $game_length . '</b>';
+        ?>
+      <?php } else { ?>
+        We are just waiting for all members to check in!
+      <?php } ?>
+    <?php } else { ?>
+      <input type="button" id="return" value="Return to Statistics"><br><br>
+      <b>Input the names of the players below:</b><br>
+      Player Name: <input class="players" type="text" id="player_0"><br>
+      Player Name: <input class="players" type="text" id="player_1"><br>
+      <div id="more_players"></div>
+      <img id="add_player" src="images/plus.png" width="25px" height="25px"><br>
+      <input type="hidden" id="next_player" value=2>
+      <input type="checkbox" id="mobile_game">Check this box if you would like to play this game on your mobile phones.
+      <br><br><input type="button" id="start_game" value="Start Game">
+    <?php } ?>
   <?php } ?>
 </body>
 </html>
