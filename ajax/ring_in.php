@@ -1,4 +1,5 @@
 <?php
 include('../library/actions.php');
-ringIn();
+$user_id = $_POST['user_id'];
+ringIn($user_id);
 ?>

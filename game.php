@@ -1,14 +1,29 @@
 <html>
 <head>
+  <meta http-equiv="refresh" content="10" />
   <link href="http://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
   <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
   <script src="http://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
   <script>
     $(document).ready(function() {
-      if ($('#rung_in').val() == 1) {
-        $('.ring_in').attr("disabled", true);
-        $('.ring_in').css('background-color', 'red');
-      }
+      $.ajax({
+        url: 'ajax/rung_in.php',
+        success: function(data) {
+          var rung_in = data.split('_')[0];
+          var user_id = data.split('_')[1];
+          if (rung_in == 1) {
+            $('.ring_in').attr("disabled", true);
+            $('.ring_in').css('background-color', 'red');
+
+            var cookie = $('#cookie').val();
+            if (user_id == cookie) {
+              $('#rung_in_display').show();
+            } else {
+              $('#rung_in_display').hide();
+            }
+          }
+        }
+      });
 
       $('#return').click(function() {
         window.location.replace('index.php');
@@ -124,11 +139,14 @@
       });
 
       $('.ring_in').click(function() {
+        var user_id = $('#cookie').val();
         $('#rung_in').val(1);
         $(this).attr("disabled", true);
         $(this).css('background-color', 'red');
         $.ajax({
           url: 'ajax/ring_in.php',
+          method: 'post',
+          data: {user_id},
           success: function() {
             window.location.reload();
           }
@@ -182,10 +200,15 @@
   $res = mysql_query($query);
 
   $checked_in = 0;
+  $rung_in = 0;
   while ($row = mysql_fetch_assoc($res)) {
     $data[] = $row;
     if ($row['checked_in'] == 1) {
       $checked_in++;
+    }
+    if ($row['rung_in'] == 1) {
+      $rung_in = 1;
+      $rung_in_id = $row['player_id'];
     }
   }
 
@@ -201,9 +224,13 @@
           $query = sprintf("SELECT * FROM current_game WHERE player_id = '%s'", $user_id);
           $user_res = mysql_query($query);
           $row = mysql_fetch_assoc($user_res);
+          ?>
+          <div id="rung_in_display" style="display:none;"><h2>You were the first to ring in!</h2></div>
+          <?php
           print '<h2>' . $row['player_name'] . ', your current score is: ' . $row['score'] . ' (Please refresh the page to update this)</h2><br>';
           ?> 
           <input type="hidden" id="rung_in" value="<?php print $game_stat_row['rung_in']; ?>">
+          <input type="hidden" id="cookie" value="<?php print $_COOKIE['user_id']; ?>">
           <input class="ring_in" type="button" id="ringin_<?php print $row['player_id']; ?>"><?php
           $query = "SELECT * FROM game_stats";
           $res = mysql_query($query);
@@ -234,7 +261,13 @@
         print "There is a non-mobile game going on right now. Please check back later!";
       }  
     } else {
-      print 'No games have been started yet! Please go online on a computer to start a game.';
+      print 'No games have been started yet! Please go online on a computer to start a game.<br/>';
+      $query = "SELECT * FROM statistics ORDER BY date DESC LIMIT 1";
+      $res = mysql_query($query);
+      $row = mysql_fetch_assoc($res);
+      if ($row) {
+        print 'The last winner was ' . $row['winner_name'] . ' with ' . $row['score'] . ' points.';
+      }
     }
   } else {
     if ($res != FALSE && mysql_num_rows($res) > 0) { 
@@ -252,39 +285,44 @@
           </tr>
           <tr>
             <?php for($i = 0; $i < count($data); $i++) { ?>
+              <?php 
+              $disabled = false;
+              if ($rung_in == 1 && isset($rung_in_id) && $rung_in_id != $data[$i]['player_id']) {
+                $disabled = true;
+              } ?> 
               <td>
               <table>
                 <tr> 
-                  <td><input type="button" class="plus" id="200_<?php print $data[$i]['player_id']; ?>" value="+200"></td>
-                  <td><input type="button" class="minus" id="200_<?php print $data[$i]['player_id']; ?>" value="-200"></td>
+                  <td><input type="button" class="plus" id="200_<?php print $data[$i]['player_id']; ?>" value="+200" <?php if($disabled) { ?> disabled <?php } ?> ></td>
+                  <td><input type="button" class="minus" id="200_<?php print $data[$i]['player_id']; ?>" value="-200" <?php if($disabled) { ?> disabled <?php } ?> ></td>
                 </tr>
                 <tr> 
-                  <td><input type="button" class="plus" id="400_<?php print $data[$i]['player_id']; ?>" value="+400"></td>
-                  <td><input type="button" class="minus" id="400_<?php print $data[$i]['player_id']; ?>" value="-400"></td>
+                  <td><input type="button" class="plus" id="400_<?php print $data[$i]['player_id']; ?>" value="+400"<?php if($disabled) { ?> disabled <?php } ?> ></td>
+                  <td><input type="button" class="minus" id="400_<?php print $data[$i]['player_id']; ?>" value="-400"<?php if($disabled) { ?> disabled <?php } ?> ></td>
                 </tr>
                 <tr> 
-                  <td><input type="button" class="plus" id="600_<?php print $data[$i]['player_id']; ?>" value="+600"></td>
-                  <td><input type="button" class="minus" id="600_<?php print $data[$i]['player_id']; ?>" value="-600"></td>
+                  <td><input type="button" class="plus" id="600_<?php print $data[$i]['player_id']; ?>" value="+600"<?php if($disabled) { ?> disabled <?php } ?> ></td>
+                  <td><input type="button" class="minus" id="600_<?php print $data[$i]['player_id']; ?>" value="-600"<?php if($disabled) { ?> disabled <?php } ?> ></td>
                 </tr>
                 <tr> 
-                  <td><input type="button" class="plus" id="800_<?php print $data[$i]['player_id']; ?>" value="+800"></td>
-                  <td><input type="button" class="minus" id="800_<?php print $data[$i]['player_id']; ?>" value="-800"></td>
+                  <td><input type="button" class="plus" id="800_<?php print $data[$i]['player_id']; ?>" value="+800"<?php if($disabled) { ?> disabled <?php } ?> ></td>
+                  <td><input type="button" class="minus" id="800_<?php print $data[$i]['player_id']; ?>" value="-800"<?php if($disabled) { ?> disabled <?php } ?> ></td>
                 </tr>
                 <tr> 
-                  <td><input type="button" class="plus" id="1000_<?php print $data[$i]['player_id']; ?>" value="+1000"></td>
-                  <td><input type="button" class="minus" id="1000_<?php print $data[$i]['player_id']; ?>" value="-1000"></td>
+                  <td><input type="button" class="plus" id="1000_<?php print $data[$i]['player_id']; ?>" value="+1000"<?php if($disabled) { ?> disabled <?php } ?> ></td>
+                  <td><input type="button" class="minus" id="1000_<?php print $data[$i]['player_id']; ?>" value="-1000"<?php if($disabled) { ?> disabled <?php } ?> ></td>
                 </tr>
                 <tr> 
-                  <td><input type="button" class="plus" id="1200_<?php print $data[$i]['player_id']; ?>" value="+1200"></td>
-                  <td><input type="button" class="minus" id="1200_<?php print $data[$i]['player_id']; ?>" value="-1200"></td>
+                  <td><input type="button" class="plus" id="1200_<?php print $data[$i]['player_id']; ?>" value="+1200"<?php if($disabled) { ?> disabled <?php } ?> ></td>
+                  <td><input type="button" class="minus" id="1200_<?php print $data[$i]['player_id']; ?>" value="-1200"<?php if($disabled) { ?> disabled <?php } ?> ></td>
                 </tr>
                 <tr> 
-                  <td><input type="button" class="plus" id="1600_<?php print $data[$i]['player_id']; ?>" value="+1600"></td>
-                  <td><input type="button" class="minus" id="1600_<?php print $data[$i]['player_id']; ?>" value="-1600"></td>
+                  <td><input type="button" class="plus" id="1600_<?php print $data[$i]['player_id']; ?>" value="+1600"<?php if($disabled) { ?> disabled <?php } ?> ></td>
+                  <td><input type="button" class="minus" id="1600_<?php print $data[$i]['player_id']; ?>" value="-1600"<?php if($disabled) { ?> disabled <?php } ?> ></td>
                 </tr>
                 <tr> 
-                  <td><input type="button" class="plus" id="2000_<?php print $data[$i]['player_id']; ?>" value="+2000"></td>
-                  <td><input type="button" class="minus" id="2000_<?php print $data[$i]['player_id']; ?>" value="-2000"></td>
+                  <td><input type="button" class="plus" id="2000_<?php print $data[$i]['player_id']; ?>" value="+2000"<?php if($disabled) { ?> disabled <?php } ?> ></td>
+                  <td><input type="button" class="minus" id="2000_<?php print $data[$i]['player_id']; ?>" value="-2000"<?php if($disabled) { ?> disabled <?php } ?> ></td>
                 </tr>
                 <tr>
                   <td>Final Jeopardy:</td>

@@ -23,6 +23,7 @@ function addToScore($player_id, $amount) {
 
   $query = "UPDATE game_stats SET rung_in = '0'";
   $res = mysql_query($query);
+  releaseButtons();
 }
 
 function removeFromScore($player_id, $amount) {
@@ -33,6 +34,7 @@ function removeFromScore($player_id, $amount) {
 
   $query = "UPDATE game_stats SET rung_in = '0'";
   $res = mysql_query($query);
+  releaseButtons();
 }
 
 function endGame() {
@@ -107,10 +109,38 @@ function checkIn($user_id) {
   $res = mysql_query($query);
 }
 
-function ringIn() {
+function ringIn($user_id) {
   global $con;
 
-  $query = "UPDATE game_stats SET rung_in = '1'";
+  $query = "SELECT * FROM current_game";
+  $res = mysql_query($query);
+  while ($row = mysql_fetch_assoc($res)) {
+    if ($row['rung_in'] == 1) {
+      return;
+    }
+  }
+
+  $query = sprintf("UPDATE current_game SET rung_in = '1' WHERE player_id = '%s'", $user_id);
+  $res = mysql_query($query);
+}
+
+function rungIn() {
+  global $con;
+
+  $query = "SELECT * FROM current_game";
+  $res = mysql_query($query);
+  while($row = mysql_fetch_assoc($res)) {
+    if ($row['rung_in'] == 1) {
+      return 1 . '_' . $row['player_id'];
+    }
+  }
+  return 0 . '_none' ;
+}
+
+function releaseButtons() {
+  global $con;
+
+  $query = "UPDATE current_game SET rung_in = '0'";
   $res = mysql_query($query);
 }
 
