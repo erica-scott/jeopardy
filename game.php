@@ -287,7 +287,7 @@
             <?php for($i = 0; $i < count($data); $i++) { ?>
               <?php 
               $disabled = false;
-              if ($rung_in == 1 && isset($rung_in_id) && $rung_in_id != $data[$i]['player_id']) {
+              if (($rung_in == 1 && isset($rung_in_id) && $rung_in_id != $data[$i]['player_id']) || ($rung_in == 0)) {
                 $disabled = true;
               } ?> 
               <td>
