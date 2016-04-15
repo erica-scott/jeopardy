@@ -103,7 +103,7 @@ if (preg_match('/iPhone|BlackBerry/', $user_agent)) {
   mysql_select_db('jeopardy');
   $query = "SELECT * FROM statistics ORDER BY score";
   $stat_res = mysql_query($query);
-  if ($stat_res != FALSE) { ?>
+  if ($stat_res != FALSE && mysql_num_rows($stat_res) > 0) { ?>
     <table border=1 width=60% style="border-collapse:collapse;">
       <tr class="header">
         <td width="30%">Name</td>

@@ -1,6 +1,5 @@
 <html>
 <head>
-  <meta http-equiv="refresh" content="10" />
   <link href="http://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
   <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
   <script src="http://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
@@ -152,6 +151,15 @@
           }
         });
       });
+
+      $('#cancel_game').click(function() {
+        $.ajax({
+          url: 'ajax/cancel_game.php',
+          success: function() {
+            window.location.reload();
+          }
+        });
+      });
     });
 
     function createCookie(name, value, minutes) {
@@ -261,6 +269,11 @@
         print "There is a non-mobile game going on right now. Please check back later!";
       }  
     } else {
+      ?> 
+      <script>
+        createCookie('user_id', 'false', 1);
+      </script>
+      <?php
       print 'No games have been started yet! Please go online on a computer to start a game.<br/>';
       $query = "SELECT * FROM statistics ORDER BY date DESC LIMIT 1";
       $res = mysql_query($query);
@@ -276,7 +289,8 @@
       $game_stat_row = mysql_fetch_assoc($res);
       if ($checked_in == count($data) || $game_stat_row['mobile_game'] == 0) { ?>
         <input type="button" id="final_jeopardy" value="Submit Final Jeopardy Scores">
-        <input type="button" id="end_game" value="End Game"><br><br>
+        <input type="button" id="end_game" value="End Game">
+        <input type="button" id="cancel_game" value="Cancel Game"><br><br>
         <table width="100%">
           <tr class="header">
             <?php for($i = 0; $i < count($data); $i++) { ?>
@@ -287,7 +301,7 @@
             <?php for($i = 0; $i < count($data); $i++) { ?>
               <?php 
               $disabled = false;
-              if (($rung_in == 1 && isset($rung_in_id) && $rung_in_id != $data[$i]['player_id']) || ($rung_in == 0)) {
+              if ($game_stat_row['mobile_game'] == 1 && (($rung_in == 1 && isset($rung_in_id) && $rung_in_id != $data[$i]['player_id']) || ($rung_in == 0))) {
                 $disabled = true;
               } ?> 
               <td>

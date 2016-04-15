@@ -144,4 +144,14 @@ function releaseButtons() {
   $res = mysql_query($query);
 }
 
+function cancelGame() {
+  global $con;
+
+  $query = "DELETE FROM current_game";
+  $res = mysql_query($query);
+
+  $query = "DELETE FROM game_stats";
+  $res = mysql_query($query);
+}
+
 ?>
