@@ -370,6 +370,7 @@
         print "<b><br>Game Stats: " . $row['number_players'] . ' players have been playing for ' . $game_length . '</b>';
         ?>
       <?php } else { ?>
+        <input type="button" id="cancel_game" value="Cancel Game">
         We are just waiting for all members to check in!
       <?php } ?>
     <?php } else { ?>
